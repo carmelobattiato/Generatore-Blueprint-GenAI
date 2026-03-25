@@ -1,53 +1,56 @@
 #!/bin/bash
 
-# Configura le tue credenziali locali se necessario (se è il primo utilizzo di Git su questo terminale)
-git config --global user.name "Carmelo Battiato"
-git config --global user.email "carmelo.battiato84@gmail.com"
+# Script per caricare automaticamente le modifiche e le blueprint su GitHub.
+# Usa "git config credential.helper store" per salvare il token la prima volta, evitando di chiederlo ai successivi lanci.
 
-# 1. Inizializzazione Repository se assente
+REPO_URL="https://github.com/carmelobattiato/Generatore-Blueprint-GenAI.git"
+
+echo "📦 Verifica e allineamento repository Git..."
+
+# 1. Inizializzazione se non esiste la repo
 if [ ! -d ".git" ]; then
-    echo "📦 Inizializzazione del repository Git locale in corso..."
+    echo "⚠️ Repository non inizializzato localmente. Procedo con 'git init'..."
     git init
-    git branch -M main
-    git remote add origin https://github.com/carmelobattiato/Generatore-Blueprint-GenAI.git
+    git remote add origin "$REPO_URL"
+    git fetch origin
+    git checkout -b main
+    git reset --mixed origin/main
 fi
 
-# 2. Richiesta Messaggio di Commit
-echo ""
-read -p "📝 Inserisci il messaggio del commit (premi INVIO per usare 'Aggiornamento'): " COMMIT_MSG
+# 2. Configura Git per "ricordare" le credenziali permanentemente
+git config credential.helper store
+
+# 3. Richiesta Messaggio di Commit
+read -p "📝 Inserisci il messaggio del commit (premi INVIO per 'Aggiornamento'): " COMMIT_MSG
 if [ -z "$COMMIT_MSG" ]; then
-    COMMIT_MSG="Aggiornamento repository GenAI Blueprint"
+    COMMIT_MSG="Aggiornamento file e Blueprint GenAI"
 fi
 
-# 3. Aggiunta File e Commit
-echo "⏳ Sto aggiungendo i file e creando il commit..."
+# 4. Git Add e Commit
+echo "⏳ Sto aggiungendo le modifiche all'indice..."
 git add .
-git commit -m "$COMMIT_MSG"
 
-if [ $? -ne 0 ]; then
-    echo "ℹ️ Nessun cambiamento da committare."
+# Controlla se c'è effettivamente qualcosa da pushare
+if git diff-index --quiet HEAD --; then
+    echo "ℹ️ Nessun cambiamento rilevato. Il workspace è già pulito."
     exit 0
 fi
 
-# 4. Richiesta Password / Personal Access Token
-echo ""
-echo "⚠️ ATTENZIONE: GitHub non accetta più le password del profilo da linea di comando."
-echo "⚠️ Incolla qui il tuo Personal Access Token (PAT) per autorizzare l'operazione."
-read -s -p "🔑 Token GitHub (il testo sarà invisibile mentre digiti): " GITHUB_TOKEN
-echo ""
+git commit -m "$COMMIT_MSG"
 
-if [ -z "$GITHUB_TOKEN" ]; then
-    echo "❌ Errore: Nessun token inserito. Operazione annullata."
-    exit 1
-fi
+# 5. Git Pull preventivo (con rebase) e Push
+echo "🚀 Sincronizzazione con GitHub in corso..."
+git pull origin main --rebase
 
-# 5. Push verso il server remoto utilizzando il token inserito
-echo "🚀 Invio dei file su GitHub in corso..."
-# Nota: Questa sintassi inserisce il token direttamente nell'URL per bypassare l'autenticazione interattiva
-git push https://carmelobattiato:${GITHUB_TOKEN}@github.com/carmelobattiato/Generatore-Blueprint-GenAI.git main
+echo "Inviando le modifiche al remoto..."
+git push origin main
 
 if [ $? -eq 0 ]; then
-    echo "✅ Push completato con successo! Il tuo codice è online."
+    echo "---------------------------------------------------------"
+    echo "✅ Push completato con successo! Tutto allineato su GitHub."
 else
-    echo "❌ Errore durante il push. Verifica che il tuo Token sia corretto e abbia il permesso 'repo'."
+    echo "---------------------------------------------------------"
+    echo "❌ Errore durante il push. Se è la prima volta, ti verrà chiesto il Token PAT (Personal Access Token)."
+    echo "Assicurati di inserire un token valido con permessi 'repo'. Il token inserito verrà salvato e non più richiesto."
+    exit 1
 fi
