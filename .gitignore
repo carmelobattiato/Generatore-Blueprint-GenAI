@@ -3,3 +3,6 @@
 gemini_last_run.log
 node_modules/
 .env
+Backup/
+Blueprint/
+GEMINI.md
