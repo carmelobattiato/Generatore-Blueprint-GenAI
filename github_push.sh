@@ -30,13 +30,8 @@ fi
 echo "⏳ Sto aggiungendo le modifiche all'indice..."
 git add .
 
-# Controlla se c'è effettivamente qualcosa da pushare
-if git diff-index --quiet HEAD --; then
-    echo "ℹ️ Nessun cambiamento rilevato. Il workspace è già pulito."
-    exit 0
-fi
-
-git commit -m "$COMMIT_MSG"
+# Tenta il commit. Se non ci sono modifiche locali (es. commit pendenti passati), prosegue senza interrompersi.
+git commit -m "$COMMIT_MSG" > /dev/null 2>&1 || echo "ℹ️ Nessun nuovo file da committare. Procedo con il controllo dei push pendenti..."
 
 # 5. Git Pull preventivo (con rebase) e Push
 echo "🚀 Sincronizzazione con GitHub in corso..."
