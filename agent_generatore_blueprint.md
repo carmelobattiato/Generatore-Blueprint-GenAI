@@ -75,14 +75,17 @@ Devi generare **TRE** diagrammi in formato vettoriale scrivendo blocchi di codic
 - Usa *sempre* `flowchart TD` (e non `graph TD`).
 - Evita frecce bidirezionali con etichette (`<-->|testo|` genera errore), usa due frecce separate o una unidirezionale `-->`.
 - Racchiudi *sempre* i testi delle etichette (label) sulle frecce tra doppi apici, specialmente se contengono spazi o parentesi (es. `A -->|"Webhook (Salva)"| B`).
+- **Numerazione Sequenziale:** Numera *sempre* i flussi sulle frecce in ordine cronologico (es. `1. Inserisce prompt`, `2. Inoltra richiesta`, etc.).
+- **Brevità Estrema:** Mantieni i testi dei nodi e delle etichette estremamente concisi. Se il diagramma è troppo largo o complesso, verrà troncato graficamente. Usa acronimi e frasi brevi.
+- **Struttura Avanzata e Stili (OBBLIGATORI):** Per l'Architecture Diagram, definisci SEMPRE i collegamenti tra i nodi *al di fuori* dei `subgraph` (nella parte inferiore del codice). Usa nodi personalizzati con andata a capo (`\n`) per le descrizioni. **DEVI SEMPRE** applicare stili personalizzati (colori di sfondo, bordi, tratteggi) per differenziare i tipi di nodi usando il comando `style` alla fine del diagramma (es. `style A fill:#f9f,stroke:#333,stroke-width:4px`).
 
-1. **Application & System Architecture Schematic (`flowchart TD` o `graph TB`):** Un vero e proprio disegno architetturale di sistema, non un semplice diagramma logico. Deve essere estremamente completo. Usa la sintassi dei `subgraph` per delineare chiaramente i confini logici e di rete (es. "Rete Cliente", "Microsoft 365 Cloud", "AWS/GCP/Azure", "LLM Provider"). Inserisci nodi specifici per gli Attori (Utenti), le Interfacce (Teams, WebApp), i Motori di Backend (n8n, Antigravity, script), le Basi Dati (SharePoint, VectorDB, DB Relazionali), i flussi di Input/Output e le chiamate API verso l'LLM o sistemi terzi (MCP).
+1. **Application & System Architecture Schematic (`flowchart TD` o `graph TB`):** Un vero e proprio disegno architetturale di sistema, non un semplice diagramma logico. Deve essere estremamente completo ma visivamente compatto. Usa la sintassi dei `subgraph` per delineare chiaramente i confini logici e di rete (es. "Rete Cliente", "Microsoft 365 Cloud", "AWS/GCP/Azure", "LLM Provider"). Inserisci nodi specifici per gli Attori (Utenti), le Interfacce (Teams, WebApp), i Motori di Backend (n8n, Antigravity, script), le Basi Dati (SharePoint, VectorDB, DB Relazionali), i flussi di Input/Output e le chiamate API verso l'LLM o sistemi terzi (MCP).
 2. **Process Diagram (`flowchart TD`):** Diagramma di flusso logico delle operazioni, con i nodi decisionali (es. IF revisione fallisce -> torna indietro).
 3. **Sequence Diagram (`sequenceDiagram`):** Interazioni cronologiche tra gli attori. Chi chiama chi, e quali payload vengono scambiati nel tempo.
 
 ### 5. Guida all'Implementazione Tecnica
 Aggiungi una sezione discorsiva e dettagliata (step-by-step) che spieghi *esattamente* come implementare la soluzione suggerita. 
-- **Prerequisiti:** Inizia sempre elencando licenze, accessi o API key necessarie.
+- **Prerequisiti:** Inizia sempre elencando licenze, accessi o API key necessarie. Usa i **Blocchi di avviso (Admonitions di GitHub)** per evidenziare requisiti o avvisi critici usando la sintassi `> [!NOTE]` o `> [!WARNING]`.
 - Per esempio, se suggerisci di usare Copilot Studio per Microsoft Teams, spiega i passi per:
   - Accedere a Copilot Studio.
   - Creare un nuovo Copilot.
@@ -131,8 +134,38 @@ Elenca brevemente i principali rischi legati all'uso dell'AI in questo use case 
 
 ### 4.1 Architecture Diagram
 ```mermaid
-graph TD
-  ...
+flowchart TD
+    subgraph Utente
+        CA[Cloud Architect]
+    end
+
+    subgraph Interfaccia e Automazione [Microsoft 365 Cloud]
+        Teams[Microsoft Teams UI]
+        Copilot[Copilot Studio Bot\n'Cloud Design Assistant']
+    end
+
+    subgraph LLM Provider
+        GPT[OpenAI GPT-5.4 / Gemini 3.1 Pro]
+    end
+
+    subgraph Enterprise Storage
+        SP[(SharePoint Aziendale\nRepository HLD)]
+    end
+
+    %% Flussi di Dati Numerati
+    CA -->|"1. Inserisce requisiti (Prompt)"| Teams
+    Teams -->|"2. Inoltra contesto"| Copilot
+    Copilot -->|"3. API Call"| GPT
+    GPT -->|"4. Generazione Testo HLD & Codice Mermaid"| Copilot
+    Copilot -->|"5. Visualizza Risposta"| Teams
+    CA -->|"6. Valida e Copia-Incolla Output"| SP
+
+    %% Stili personalizzati
+    style CA fill:#f9f,stroke:#333,stroke-width:4px
+    style Teams fill:#bbf,stroke:#00f
+    style Copilot fill:#bbf,stroke:#00f
+    style GPT fill:#f96,stroke:#f00,stroke-width:2px,stroke-dasharray: 5 5
+    style SP fill:#dfd,stroke:#333,stroke-width:2px
 ```
 
 ### 4.2 Process Diagram
@@ -149,6 +182,9 @@ sequenceDiagram
 
 ## 5. Guida all'Implementazione Tecnica
 ### Prerequisiti
+> [!NOTE]
+> Per realizzare questa architettura è necessaria una licenza Enterprise per Copilot Studio.
+
 - [Requisito 1]
 - [Requisito 2]
 
