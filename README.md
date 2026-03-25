@@ -1,145 +1,150 @@
 #  🚀 Enterprise GenAI Infrastructure Blueprint Generator
 
 ## 📖 Descrizione
-Questo progetto è un framework di automazione basato su **Gemini CLI** che permette di generare massivamente "Blueprint" architetturali e operativi per infrastrutture IT. Partendo da un elenco di Use Case definiti in un file CSV, il sistema utilizza un prompt di sistema specializzato per interrogare l'Intelligenza Artificiale Generativa e produrre documenti Markdown dettagliati, completi di architetture, diagrammi e guide all'implementazione.
+Questo progetto è un framework di automazione avanzato basato su **Gemini CLI** (Marzo 2026) progettato per generare massivamente "Blueprint" architetturali e operativi per infrastrutture IT di livello Enterprise. 
+
+Partendo da un elenco di Use Case definiti in un file CSV (es. Architetture Cloud, RAG, MCP, Multi-Agent), il sistema utilizza un **Agent GenAI specializzato** per produrre documenti Markdown completi di:
+- 🏛️ **Architetture di Sistema** (Mermaid.js)
+- 🔄 **Diagrammi di Processo e Sequenza**
+- 📊 **Stime di ROI e Efficienza**
+- 🛠️ **Guide all'Implementazione Tecnica**
+
+---
 
 ## 🏗️ Architettura del Sistema
 
 ```mermaid
 flowchart TD
-    A[Utente / Operatore] -->|Esegue| B(generate_blueprints.sh)
-    B -->|Legge| C[(attivita_infrastrutture_TA.csv)]
-    B -->|Carica System Prompt| D[agent_generatore_blueprint.md]
-    B -->|Invia Prompt + Dati| E{Gemini CLI}
-    E -->|Interroga| F[Google Gemini API]
-    F -->|Risposta Generata| E
-    E -->|Salva file .md| G[(Cartella Blueprint/)]
-    A -->|Verifica Sintassi| H(validate_blueprints.sh)
-    H -->|Analizza file .md| G
-    A -->|Esegue Backup| I(backup.sh)
-    I -->|Crea Archivio .tar.gz| J[(Cartella Backup/)]
+    subgraph Utente ["👤 Operatore / Architetto"]
+        A[Terminal / CLI]
+    end
+
+    subgraph Automazione ["⚙️ Motore di Orchestrazione (Bash)"]
+        B(generate_blueprints.sh)
+        C(validate_blueprints.sh)
+        D(backup.sh)
+    end
+
+    subgraph Fonti_Dati ["📂 Risorse del Progetto"]
+        E[(attivita_infrastrutture_TA.csv)]
+        F[agent_generatore_blueprint.md]
+    end
+
+    subgraph AI_Engine ["🧠 GenAI Stack (SOTA 2026)"]
+        G{Gemini CLI}
+        H[Google Gemini 3.1 Pro / Deep Think]
+    end
+
+    subgraph Output ["📄 Deliverables"]
+        I[(Cartella Blueprint/)]
+    end
+
+    %% Flussi di Dati Numerati
+    A -->|"1. Lancia Script"| B
+    B -->|"2. Estrae Riga"| E
+    B -->|"3. Inietta Prompt"| F
+    B -->|"4. Invoca API"| G
+    G <-->|"5. Ragionamento"| H
+    G -->|"6. Scrittura MD"| I
+    A -->|"7. Validazione"| C
+    C -- "Analizza" --> I
+    A -->|"8. Backup"| D
+
+    %% Stili personalizzati
+    style Utente fill:#f9f,stroke:#333,stroke-width:2px
+    style Automazione fill:#bbf,stroke:#00f,stroke-width:2px
+    style Fonti_Dati fill:#dfd,stroke:#333,stroke-width:2px
+    style AI_Engine fill:#f96,stroke:#f00,stroke-width:2px,stroke-dasharray: 5 5
+    style Output fill:#fff,stroke:#333,stroke-width:4px
 ```
 
-## 🔄 Flusso di Lavoro (Process Flow)
-
-```mermaid
-flowchart TD
-    Start([Inizio Processo]) --> ReadCSV[Lettura File CSV]
-    ReadCSV --> CheckRow{Riga Valida?}
-    CheckRow -- No --> NextRow[Passa a riga successiva]
-    CheckRow -- Si --> BuildPrompt[Costruzione Prompt Singolo]
-    BuildPrompt --> CallGemini[Esecuzione Gemini CLI]
-    CallGemini --> ParseResponse[Ricezione Output Markdown]
-    ParseResponse --> SaveMD[Salvataggio in Blueprint/]
-    SaveMD --> CheckMore{Altre Righe?}
-    CheckMore -- Si --> NextRow
-    NextRow --> ReadCSV
-    CheckMore -- No --> End([Fine Elaborazione])
-```
-
-## ⏱️ Diagramma di Sequenza
-
-```mermaid
-sequenceDiagram
-    participant U as Utente
-    participant S as generate_blueprints.sh
-    participant C as CSV
-    participant G as Gemini CLI
-    participant API as Gemini API
-    participant FS as File System
-    
-    U->>S: Esegue ./generate_blueprints.sh [ID]
-    S->>C: Legge riga corrispondente all'ID
-    C-->>S: Restituisce Dati (Categoria, Titolo, ecc.)
-    S->>G: Invoca CLI con Dati + System Prompt
-    G->>API: Invia Richiesta all'LLM
-    API-->>G: Ritorna Blueprint in Markdown
-    G-->>S: Output generato
-    S->>FS: Salva file in Blueprint/ID_blueprint_Titolo.md
-    S-->>U: Notifica completamento
-```
+---
 
 ## 📋 Prerequisiti
 
-Per eseguire questo progetto, è necessario avere installato sul proprio sistema locale:
+> [!IMPORTANT]
+> Assicurati di aver configurato correttamente le variabili d'ambiente per l'accesso alle API.
 
-1. **OS:** Ambiente Linux, macOS o WSL (Windows Subsystem for Linux).
-2. **Bash:** Shell standard per l'esecuzione degli script.
-3. **Gemini CLI:** Installata e funzionante.
-4. **Node.js & npx:** Necessari per l'esecuzione dello script di validazione (`markdownlint-cli` e `@mermaid-js/mermaid-cli`).
-5. **Chiave API Gemini:** Una chiave API valida esportata come variabile d'ambiente (`GEMINI_API_KEY`).
-6. **Utilità Base:** `awk`, `tar`, `find`.
+1. **OS:** macOS (Darwin), Linux o WSL2.
+2. **Gemini CLI:** Versione 2026 installata (`gemini --version`).
+3. **Node.js:** Richiesto per il linter `validate_blueprints.sh` (npx).
+4. **Chiave API:** `export GEMINI_API_KEY="tua_chiave"` impostata nel profilo shell.
 
-## 🚀 Installazione
+---
 
-1. Clona il repository in locale:
+## 🚀 Installazione e Aggiornamento
+
+Se è la prima volta che utilizzi il generatore in questo ambiente:
+
+1. **Clonazione:**
    ```bash
    git clone https://github.com/carmelobattiato/Generatore-Blueprint-GenAI.git
    cd Generatore-Blueprint-GenAI
    ```
 
-2. Rendi eseguibili gli script Bash:
+2. **Aggiornamento Rapido:**
+   Se hai già il progetto ma vuoi scaricare l'ultima logica dell'Agent e degli script:
    ```bash
-   chmod +x generate_blueprints.sh validate_blueprints.sh backup.sh github_push.sh
+   chmod +x *.sh
+   ./update_from_github.sh
    ```
 
-3. Esporta la tua chiave API Gemini:
-   ```bash
-   export GEMINI_API_KEY="la-tua-chiave-api-qui"
-   ```
+---
 
-## 🛠️ Utilizzo
+## 🛠️ Utilizzo degli Script
 
-Il progetto include diversi script per gestire l'intero ciclo di vita della generazione.
+### 1. Generazione Blueprint (`generate_blueprints.sh`)
+Lo script più importante. Supporta due modalità di esecuzione:
 
-### 1. Generazione dei Blueprint
-
-Usa lo script `generate_blueprints.sh` per creare i documenti Markdown. Supporta due modalità (con opzione opzionale `-v` per output di debug):
-
-- **Modalità Lista (per ID specifici):**
+- **Per Range di ID:**
   ```bash
-  # Genera la blueprint per l'ID 74
-  ./generate_blueprints.sh "74"
-  
-  # Genera per più ID separati da punto e virgola
-  ./generate_blueprints.sh "9;13;74"
+  ./generate_blueprints.sh 1 10
+  ```
+- **Per ID Specifici (Lista):**
+  ```bash
+  ./generate_blueprints.sh "02;05;69"
   ```
 
-- **Modalità Range (da ID a ID):**
-  ```bash
-  # Genera i blueprint dall'ID 1 all'ID 5
-  ./generate_blueprints.sh 1 5
-  ```
-
-Tutti i file generati verranno salvati nella cartella `Blueprint/` (ignorata da git per mantenere la privacy dei documenti).
-
-### 2. Validazione dei Blueprint
-
-Usa `validate_blueprints.sh` per controllare la correttezza della sintassi Markdown e dei diagrammi Mermaid.js generati dall'AI:
-
+### 2. Validazione Qualità (`validate_blueprints.sh`)
+Controlla che l'AI non abbia commesso errori di sintassi Markdown o Mermaid.js:
 ```bash
-# Valida tutti i file nella cartella Blueprint/
 ./validate_blueprints.sh Blueprint/
 ```
+> [!TIP]
+> Puoi validare anche un singolo file: `./validate_blueprints.sh Blueprint/01_blueprint_...md`
 
-### 3. Backup del Progetto
-
-Crea un archivio compresso `.tar.gz` dell'intero progetto (escludendo se stesso e file nascosti):
-
-```bash
-./backup.sh
-```
-I backup verranno salvati nella cartella `Backup/`.
-
-### 4. Push su GitHub
-
-Per aggiornare il repository remoto in modo interattivo e sicuro (richiede un Personal Access Token):
-
+### 3. Allineamento Cloud (`github_push.sh`)
+Invia le modifiche al repository GitHub. Salva il tuo Personal Access Token (PAT) dopo il primo invio grazie all'helper `store`.
 ```bash
 ./github_push.sh
 ```
 
-## 🔒 Sicurezza e Privacy
+---
 
-- I Blueprint generati contengono potenzialmente informazioni sensibili o proprietarie e sono salvati nella cartella `Blueprint/`.
-- Il file `.gitignore` è stato configurato per **impedire** il caricamento dei file `*.md` generati all'interno di `Blueprint/` e dei file compressi all'interno di `Backup/` sul repository pubblico.
+## 🔄 Flusso Operativo Atomico
+
+```mermaid
+flowchart TD
+    Start([Inizio]) --> CSV[Lettura CSV Categoria/Titolo]
+    CSV --> Logic{Risoluzione Atomica?}
+    Logic -- No --> Error[Errore: Task troppo complesso]
+    Logic -- Sì --> Prompt[Costruzione Prompt 2026]
+    Prompt --> Gen[Generazione Gemini 3.1]
+    Gen --> Mermaid[Iniezione Stili Mermaid]
+    Mermaid --> Save[Salvataggio in folder Blueprint/]
+    Save --> End([Fine])
+
+    style Start fill:#dfd
+    style End fill:#dfd
+    style Logic fill:#fdd,stroke:#f00
+```
+
+---
+
+## 🔒 Sicurezza e Governance (Infrastrutture T&A)
+
+> [!WARNING]
+> **Data Privacy:** Le cartelle `Blueprint/` e `Backup/` sono inserite nel `.gitignore`. 
+> I documenti generati NON vengono mai caricati su GitHub per preservare la riservatezza delle architetture dei clienti.
+
+Il generatore segue il paradigma **Human-in-the-loop**: ogni blueprint prodotta dall'AI richiede la validazione finale di un Cloud Architect o di un Bid Manager per garantire l'aderenza alle specifiche tecniche reali.
