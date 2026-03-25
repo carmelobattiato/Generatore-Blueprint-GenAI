@@ -1,0 +1,3 @@
+# I blueprint generati sono privati e NON devono essere caricati sul repository pubblico
+*.md
+!.gitignore

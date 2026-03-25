@@ -1,0 +1,5 @@
+*.log
+.DS_Store
+gemini_last_run.log
+node_modules/
+.env
