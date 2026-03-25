@@ -26,7 +26,7 @@ flowchart TD
     end
 
     subgraph Fonti_Dati ["📂 Risorse del Progetto"]
-        E[(attivita_infrastrutture_TA.csv)]
+        E[(blueprint_use_cases.csv)]
         F[agent_generatore_blueprint.md]
     end
 
