@@ -1,4 +1,4 @@
-# 🚀 Enterprise GenAI Infrastructure Blueprint Generator
+#  🚀 Enterprise GenAI Infrastructure Blueprint Generator
 
 ## 📖 Descrizione
 Questo progetto è un framework di automazione basato su **Gemini CLI** che permette di generare massivamente "Blueprint" architetturali e operativi per infrastrutture IT. Partendo da un elenco di Use Case definiti in un file CSV, il sistema utilizza un prompt di sistema specializzato per interrogare l'Intelligenza Artificiale Generativa e produrre documenti Markdown dettagliati, completi di architetture, diagrammi e guide all'implementazione.
