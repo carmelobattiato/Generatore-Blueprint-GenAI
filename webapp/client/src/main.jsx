@@ -4,7 +4,6 @@ import './index.css'
 import { createBrowserRouter, RouterProvider, Navigate, useLocation } from 'react-router-dom'
 import App from './App.jsx'
 import UsecasePage from './UsecasePage.jsx'
-import UsecasePage2 from './UsecasePage2.jsx'
 import LoginPage from './LoginPage.jsx'
 import { AuthProvider, useAuth } from './AuthContext.jsx'
 
@@ -78,8 +77,7 @@ const router = createBrowserRouter([
   { path: '/Usecase', element: <Navigate to="/newusecase" replace /> },
 
   // User pages (no auth wrapper — ProtectedRoute causa blank page, da investigare)
-  { path: '/newusecase',  element: <ErrorBoundary><UsecasePage /></ErrorBoundary> },
-  { path: '/newusecase2', element: <ErrorBoundary><UsecasePage2 /></ErrorBoundary> },
+  { path: '/newusecase', element: <ErrorBoundary><UsecasePage /></ErrorBoundary> },
   { path: '/usecase',    element: <ErrorBoundary><UsecasePage /></ErrorBoundary> }, // kept for verification
   { path: '/usecase2',   element: <ErrorBoundary><UsecasePage /></ErrorBoundary> }, // kept for verification
   { path: '/reader',  element: <ProtectedRoute element={<App standalone />} roles={['admin', 'user']} /> },
