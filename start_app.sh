@@ -30,23 +30,97 @@ is_port_up() {
     timeout 1 bash -c "cat < /dev/null > /dev/tcp/127.0.0.1/$1" 2>/dev/null
 }
 
+# Pacchetti npm richiesti per backend e frontend
+BACKEND_REQUIRED_PKGS=(
+    "express"
+    "better-sqlite3"
+    "bcryptjs"
+    "cookie-parser"
+    "cors"
+    "csv-parse"
+)
+FRONTEND_REQUIRED_PKGS=(
+    "react"
+    "react-dom"
+    "react-router-dom"
+    "axios"
+    "vite"
+    "lucide-react"
+    "framer-motion"
+    "html2pdf.js"
+    "react-markdown"
+    "jszip"
+    "marked"
+    "mermaid"
+    "tailwindcss"
+)
+
+# Verifica che tutti i pacchetti richiesti siano installati in una directory node_modules
+check_packages() {
+    local dir="$1"
+    shift
+    local pkgs=("$@")
+    local missing=()
+    for pkg in "${pkgs[@]}"; do
+        # Supporta nomi scoped (@scope/pkg) e nomi con slash
+        local check_path="$dir/node_modules/${pkg}"
+        if [ ! -d "$check_path" ]; then
+            missing+=("$pkg")
+        fi
+    done
+    if [ ${#missing[@]} -gt 0 ]; then
+        echo "   ⚠️  Pacchetti mancanti: ${missing[*]}"
+        return 1
+    fi
+    return 0
+}
+
 install_app() {
     echo "🛠️  Verifica e installazione prerequisiti..."
     if ! command -v node &> /dev/null; then echo "❌ Errore: Node.js non trovato."; exit 1; fi
     if ! command -v npm &> /dev/null; then echo "❌ Errore: npm non trovato."; exit 1; fi
-    
-    echo "📦 Pulizia e Installazione dipendenze Backend..."
+    echo "   Node.js: $(node -v)  |  npm: $(npm -v)"
+
+    echo "📦 Installazione dipendenze Backend..."
     cd "$APP_DIR/webapp"
-    rm -rf node_modules package-lock.json
     npm install --silent
-    
-    echo "📦 Pulizia e Installazione dipendenze Frontend..."
+    echo "   Verifica pacchetti backend..."
+    check_packages "$APP_DIR/webapp" "${BACKEND_REQUIRED_PKGS[@]}" || npm install --silent
+
+    echo "📦 Installazione dipendenze Frontend..."
     cd "$APP_DIR/webapp/client"
-    rm -rf node_modules package-lock.json
     npm install --silent
-    
+    echo "   Verifica pacchetti frontend..."
+    check_packages "$APP_DIR/webapp/client" "${FRONTEND_REQUIRED_PKGS[@]}" || npm install --silent
+
     cd "$APP_DIR"
     echo "✨ Installazione completata con successo!"
+}
+
+# Controlla pacchetti senza reinstallare tutto — usato all'avvio
+check_and_fix_packages() {
+    local needs_fix=false
+
+    echo "🔍 Controllo pacchetti backend..."
+    if ! check_packages "$APP_DIR/webapp" "${BACKEND_REQUIRED_PKGS[@]}"; then
+        echo "   → Installo pacchetti backend mancanti..."
+        cd "$APP_DIR/webapp" && npm install --silent
+        needs_fix=true
+    else
+        echo "   ✅ Backend OK"
+    fi
+
+    echo "🔍 Controllo pacchetti frontend..."
+    if ! check_packages "$APP_DIR/webapp/client" "${FRONTEND_REQUIRED_PKGS[@]}"; then
+        echo "   → Installo pacchetti frontend mancanti..."
+        cd "$APP_DIR/webapp/client" && npm install --silent
+        needs_fix=true
+    else
+        echo "   ✅ Frontend OK"
+    fi
+
+    cd "$APP_DIR"
+    return 0
 }
 
 start_app() {
@@ -57,8 +131,10 @@ start_app() {
         return 0
     fi
 
-    if [ ! -d "webapp/node_modules" ] || [ ! -d "webapp/client/node_modules" ]; then
+    if [ ! -d "$APP_DIR/webapp/node_modules" ] || [ ! -d "$APP_DIR/webapp/client/node_modules" ]; then
         install_app
+    else
+        check_and_fix_packages
     fi
 
     echo "🚀 Avvio BlueprintAI Manager in background..."
@@ -148,11 +224,102 @@ restart_app() {
     start_app
 }
 
+restart_frontend() {
+    echo "🔄 Riavvio solo frontend (Vite)..."
+    echo "🔍 Controllo pacchetti frontend..."
+    if ! check_packages "$APP_DIR/webapp/client" "${FRONTEND_REQUIRED_PKGS[@]}"; then
+        echo "   → Installo pacchetti mancanti..."
+        cd "$APP_DIR/webapp/client" && npm install --silent
+        cd "$APP_DIR"
+    else
+        echo "   ✅ Pacchetti OK"
+    fi
+    # Termina solo il processo Vite
+    fuser -k $FRONTEND_PORT/tcp 2>/dev/null
+    if [ -f "$PID_FILE" ]; then
+        FRONTEND_PID=$(tail -n 1 "$PID_FILE")
+        kill "$FRONTEND_PID" 2>/dev/null
+    fi
+    sleep 1
+
+    # Riavvia Vite
+    cd "$APP_DIR/webapp/client"
+    nohup npx vite --port $FRONTEND_PORT --host >> "$FRONTEND_LOG" 2>&1 < /dev/null &
+    NEW_FRONTEND_PID=$!
+    cd "$APP_DIR"
+
+    # Aggiorna PID file mantenendo il backend PID
+    if [ -f "$PID_FILE" ]; then
+        BACKEND_PID=$(head -n 1 "$PID_FILE")
+        echo "$BACKEND_PID" > "$PID_FILE"
+        echo "$NEW_FRONTEND_PID" >> "$PID_FILE"
+    else
+        echo "$NEW_FRONTEND_PID" > "$PID_FILE"
+    fi
+
+    echo "⏳ Attendo Vite su porta $FRONTEND_PORT..."
+    local timer=0
+    while [ $timer -lt 30 ]; do
+        if is_port_up $FRONTEND_PORT; then
+            echo "✅ Frontend riavviato! http://localhost:$FRONTEND_PORT"
+            return 0
+        fi
+        sleep 1
+        ((timer++))
+    done
+    echo "⚠️ Timeout: Vite non risponde. Controlla frontend.log"
+}
+
+restart_backend() {
+    echo "🔄 Riavvio solo backend (Node)..."
+    echo "🔍 Controllo pacchetti backend..."
+    if ! check_packages "$APP_DIR/webapp" "${BACKEND_REQUIRED_PKGS[@]}"; then
+        echo "   → Installo pacchetti mancanti..."
+        cd "$APP_DIR/webapp" && npm install --silent
+        cd "$APP_DIR"
+    else
+        echo "   ✅ Pacchetti OK"
+    fi
+    fuser -k $BACKEND_PORT/tcp 2>/dev/null
+    if [ -f "$PID_FILE" ]; then
+        BACKEND_PID=$(head -n 1 "$PID_FILE")
+        kill "$BACKEND_PID" 2>/dev/null
+    fi
+    sleep 1
+
+    cd "$APP_DIR/webapp"
+    nohup node server.js >> "$BACKEND_LOG" 2>&1 &
+    NEW_BACKEND_PID=$!
+    cd "$APP_DIR"
+
+    if [ -f "$PID_FILE" ]; then
+        FRONTEND_PID=$(tail -n 1 "$PID_FILE")
+        echo "$NEW_BACKEND_PID" > "$PID_FILE"
+        echo "$FRONTEND_PID" >> "$PID_FILE"
+    else
+        echo "$NEW_BACKEND_PID" > "$PID_FILE"
+    fi
+
+    echo "⏳ Attendo backend su porta $BACKEND_PORT..."
+    local timer=0
+    while [ $timer -lt 30 ]; do
+        if is_port_up $BACKEND_PORT; then
+            echo "✅ Backend riavviato! http://localhost:$BACKEND_PORT"
+            return 0
+        fi
+        sleep 1
+        ((timer++))
+    done
+    echo "⚠️ Timeout: backend non risponde. Controlla backend.log"
+}
+
 case "$1" in
     install) install_app ;;
     start) start_app ;;
     stop) stop_app ;;
     status) show_status ;;
     restart) restart_app ;;
-    *) echo "Utilizzo: $0 {install|start|stop|status|restart}"; exit 1 ;;
+    restart-frontend) restart_frontend ;;
+    restart-backend) restart_backend ;;
+    *) echo "Utilizzo: $0 {install|start|stop|status|restart|restart-frontend|restart-backend}"; exit 1 ;;
 esac
