@@ -7,7 +7,7 @@ import { C, GRID_BG, BG_ICONS, BADGES } from './blueprintTheme'
 
 const API_BASE = '/api'
 
-export default function UsecasePage() {
+export default function UsecasePage2() {
   const navigate  = useNavigate()
   const { user, logout } = useAuth()
   const [text,     setText]     = useState('')
@@ -74,7 +74,7 @@ export default function UsecasePage() {
           es.close(); setStatus('error'); setMessage('Generazione annullata')
         }
       }
-      es.onerror = () => { es.close(); setStatus('error'); setMessage('Connessione persa. La generazione potrebbe essere ancora in corso.') }
+      es.onerror = () => { es.close(); setStatus('error'); setMessage('Connessione persa.') }
     } catch (err) {
       setStatus('error')
       setMessage(err.response?.data?.error || err.message)
@@ -159,7 +159,7 @@ export default function UsecasePage() {
               onMouseEnter={e => { if (status !== 'loading') e.currentTarget.style.background = status === 'error' ? '#b91c1c' : C.accentHover }}
               onMouseLeave={e => e.currentTarget.style.background = status === 'error' ? C.danger : C.accent}
             >
-              {status === 'loading' && <Loader2 size={15} style={{ animation: 'uc_spin 1s linear infinite' }} />}
+              {status === 'loading' && <Loader2 size={15} style={{ animation: 'bp2spin 1s linear infinite' }} />}
               {status === 'success' ? 'Nuovo usecase' : status === 'error' ? 'Riprova' : 'Genera Blueprint'}
             </button>
           </div>
@@ -203,7 +203,7 @@ export default function UsecasePage() {
 
       </div>
 
-      <style>{`@keyframes uc_spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }`}</style>
+      <style>{`@keyframes bp2spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }`}</style>
     </div>
   )
 }
